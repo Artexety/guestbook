@@ -17,6 +17,12 @@ package guestbook;
 
 import jakarta.validation.constraints.NotBlank;
 
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.IOException;
+
 /**
  * Type to bind request payloads and make them available in the controller. In contrast to {@link GuestbookEntry} it is
  * particularly designed to also be able to capture invalid input, so that the raw form data can be bound and validated
@@ -31,6 +37,10 @@ class GuestbookForm {
 
 	private final @NotBlank String name;
 	private final @NotBlank String text;
+	private final @NotBlank String mail;
+
+    private MultipartFile image;
+    private static String UPLOAD_DIR = "uploads/";
 
 	/**
 	 * Creates a new {@link GuestbookForm} with the given name and text. Spring Framework will use this constructor to
@@ -42,11 +52,23 @@ class GuestbookForm {
 	 * @param name the value to bind to {@code name}
 	 * @param text the value to bind to {@code text}
 	 */
-	public GuestbookForm(String name, String text) {
+	public GuestbookForm(String name, String text, String mail, MultipartFile image) {
+
+        this.image = image;
 
 		this.name = name;
 		this.text = text;
+		this.mail = mail;
 	}
+
+    public MultipartFile getImage() {
+        return image;
+    }
+
+    public void setImage(MultipartFile image) {
+        this.image = image;
+    }
+
 
 	/**
 	 * Returns the value bound to the {@code name} attribute of the request. Needs to be public so that Spring will
@@ -70,6 +92,15 @@ class GuestbookForm {
 		return text;
 	}
 
+
+	/**
+	 * as above but for the mail field
+	 *
+	 */
+	public String getMail() {
+		return mail;
+	}
+
 	/**
 	 * Returns a new {@link GuestbookEntry} using the data submitted in the request.
 	 *
@@ -77,6 +108,30 @@ class GuestbookForm {
 	 * @throws IllegalArgumentException if you call this on an instance without the name and text actually set.
 	 */
 	GuestbookEntry toNewEntry() {
-		return new GuestbookEntry(getName(), getText());
+        String imageUrl = saveImageAndGetUrl(this.image);
+		return new GuestbookEntry(getName(), getText(), getMail(), imageUrl);
 	}
+
+    private String saveImageAndGetUrl(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            // handle case where no image was provided
+            return null;
+        }
+
+        try {
+            byte[] bytes = image.getBytes();
+            Path path = Paths.get(UPLOAD_DIR + image.getOriginalFilename());
+            Files.write(path, bytes);
+
+            // Here, you'd return the URL that points to the new image.
+            // This assumes that there's a static file server serving the upload directory
+            // under the /uploads/ path.
+            return "/uploads/" + image.getOriginalFilename();
+
+        } catch (IOException e) {
+            // handle exception (you might want to throw it so that the caller can handle it)
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

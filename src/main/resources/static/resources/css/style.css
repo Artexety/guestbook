@@ -15,6 +15,50 @@ div#entries, #form {
 	font-size: 0.8em;
 }
 
+.drop-container {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px dashed #555;
+    color: #444;
+    cursor: pointer;
+    transition: background .2s ease-in-out, border .2s ease-in-out;
+}
+
+.drop-container input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    cursor: pointer;
+    opacity: 0; /* Make it invisible */
+    z-index: 1; /* Ensure it's above other contents */
+}
+  
+.drop-container:hover {
+background: #eee;
+border-color: #111;
+}
+
+.drop-container:hover .drop-title {
+color: #222;
+}
+
+.drop-title {
+color: #444;
+font-size: 20px;
+font-weight: bold;
+text-align: center;
+transition: color .2s ease-in-out;
+}
+
 blockquote {
 	margin: 0;
 }

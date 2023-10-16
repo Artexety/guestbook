@@ -34,6 +34,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * A controller to handle web requests to manage {@link GuestbookEntry}s
  *
@@ -96,12 +105,12 @@ class GuestbookController {
 	 * @return a redirect string
 	 */
 	@PostMapping(path = "/guestbook")
-	String addEntry(@Valid @ModelAttribute("form") GuestbookForm form, Errors errors, Model model) {
+	String addEntry(@Valid @ModelAttribute("form") GuestbookForm form, Errors errors, Model model, @RequestPart("image") MultipartFile image) {
 
 		if (errors.hasErrors()) {
 			return guestBook(model, form);
 		}
-
+		form.setImage(image);
 		guestbook.save(form.toNewEntry());
 
 		return "redirect:/guestbook";

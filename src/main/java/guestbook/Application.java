@@ -28,6 +28,20 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.IOException;
+
+import java.util.Comparator; // for Comparator
+import java.io.File;         // for File
+
+
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+
 /**
  * The core class to bootstrap our application. It triggers Spring Boot's auto-configuration, component scanning and
  * configuration properties scanning using the {@link SpringBootApplication} convenience annotation. At the same time,
@@ -56,19 +70,51 @@ public class Application {
 	 */
 	@Bean
 	CommandLineRunner init(GuestbookRepository guestbook) {
-
 		return args -> {
 
 			Stream.of( //
-					new GuestbookEntry("H4xx0r", "first!!!"), //
-					new GuestbookEntry("Arni", "Hasta la vista, baby"), //
+					new GuestbookEntry("H4xx0r", "first!!!", "test@mail.com", null), //
+					new GuestbookEntry("Arni", "Hasta la vista, baby", "test@mail.com", null), //
 					new GuestbookEntry("Duke Nukem",
-							"It's time to kick ass and chew bubble gum. And I'm all out of gum."), //
+							"It's time to kick ass and chew bubble gum. And I'm all out of gum.", "test@mail.com", null), //
 					new GuestbookEntry("Gump1337",
-							"Mama always said life was like a box of chocolates. You never know what you're gonna get.")) //
+							"Mama always said life was like a box of chocolates. You never know what you're gonna get.", "test@mail.com", null)) //
 					.forEach(guestbook::save);
 		};
 	}
+
+    @PostConstruct
+    public void onStartUp() {
+        File uploadDir = new File("uploads/");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdir(); // create the directory if it doesn't exist
+        }
+    }
+
+    @PreDestroy
+    public void onShutdown() {
+        System.out.println("Server is shutting down. Clearing uploads directory...");
+        clearUploadsDirectory();
+    }
+
+
+    public void clearUploadsDirectory() {
+        try {
+            Path uploadsDir = Paths.get("uploads/");
+
+            if (Files.exists(uploadsDir)) {
+                Files.walk(uploadsDir)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+
+                System.out.println("Uploads directory cleared!");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Error occurred while clearing uploads directory.");
+        }
+    }
 
 	/**
 	 * This class customizes the web and web security configuration through callback methods provided by the
@@ -101,5 +147,11 @@ public class Application {
 
 			return http.build();
 		}
+
+        @Override
+        public void addResourceHandlers(ResourceHandlerRegistry registry) {
+            registry.addResourceHandler("/uploads/**")
+                    .addResourceLocations("file:uploads/"); 
+        }
 	}
 }
